@@ -1,4 +1,5 @@
 # dl_lib_comparison_csp
+<<<<<<< HEAD
 
 This is a project for comparing diffferent approaches for matrix multiplication on cpu and gpu and determine if GPU outperforms CPU at some point and how.
 
@@ -102,3 +103,6 @@ gcc -O3 -march=native -ffast-math -fassociative-math \
 ./blas_multiplication_flags
 
 gpu/
+=======
+This is a project for comparing matrix multiplication optimisations on cpu vs gpu 
+>>>>>>> 5e245f1130ab7d9ed1c9c59657f994935c297045
