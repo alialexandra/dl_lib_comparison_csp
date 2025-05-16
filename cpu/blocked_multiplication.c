@@ -2,14 +2,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#ifndef N
-#define N 1024
-#endif
-
-#ifndef BLOCK_SIZE
-#define BLOCK_SIZE 64
-#endif
-
 #ifndef NUM_REPS
 #define NUM_REPS 3
 #endif
@@ -49,14 +41,35 @@ double get_time()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc < 3)
+    {
+        fprintf(stderr, "Usage: %s <N> <BLOCK_SIZE>\n", argv[0]);
+        return 1;
+    }
+
+    int N = atoi(argv[1]);
+    int BLOCK_SIZE = atoi(argv[2]);
+
+    if (N <= 0 || BLOCK_SIZE <= 0)
+    {
+        fprintf(stderr, "Invalid input. N and BLOCK_SIZE must be positive integers.\n");
+        return 1;
+    }
+
     int size = N * N;
     double *A = malloc(size * sizeof(double));
     double *B = malloc(size * sizeof(double));
     double *C1 = calloc(size, sizeof(double));
     double *C2 = calloc(size, sizeof(double));
     double *C = calloc(size, sizeof(double));
+
+    if (!A || !B || !C1 || !C2 || !C)
+    {
+        fprintf(stderr, "Memory allocation failed.\n");
+        return 1;
+    }
 
     for (int i = 0; i < size; ++i)
     {
@@ -68,7 +81,6 @@ int main()
 
     for (int rep = 0; rep < NUM_REPS; ++rep)
     {
-        // Allocate fresh temp matrices for each rep
         double *A_T = malloc(size * sizeof(double));
         double *A2 = calloc(size, sizeof(double));
 
@@ -83,17 +95,17 @@ int main()
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
+
         printf("Run %d: %.6f seconds\n", rep + 1, elapsed);
 
         free(A_T);
         free(A2);
-        // Clear C1 and C2 for next run
         for (int i = 0; i < size; ++i)
             C1[i] = C2[i] = 0.0;
     }
 
-    printf("Blocked C = B*Aᵀ + A²*B: Avg time over %d runs for N=%d → %.6f seconds\n",
-           NUM_REPS, N, total_time / NUM_REPS);
+    printf("Blocked C = B*Aᵀ + A²*B: N=%d, BLOCK_SIZE=%d → Avg time over %d runs: %.6f seconds\n",
+           N, BLOCK_SIZE, NUM_REPS, total_time / NUM_REPS);
 
     free(A);
     free(B);
