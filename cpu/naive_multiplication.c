@@ -2,16 +2,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#ifndef N
-#define N 1024
-#endif
-
 #ifndef NUM_REPS
 #define NUM_REPS 1
 #endif
 
 // Naive matrix multiplication
-// C = B × Aᵀ + A² × B
 void matmul(const double *A, const double *B, double *C, int n)
 {
     for (int i = 0; i < n; ++i)
@@ -50,8 +45,21 @@ double get_time()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc < 2)
+    {
+        fprintf(stderr, "Usage: %s <N>\n", argv[0]);
+        return 1;
+    }
+
+    int N = atoi(argv[1]);
+    if (N <= 0)
+    {
+        fprintf(stderr, "Invalid matrix size: %s\n", argv[1]);
+        return 1;
+    }
+
     int size = N * N;
     double *A = malloc(size * sizeof(double));
     double *B = malloc(size * sizeof(double));
@@ -59,11 +67,12 @@ int main()
     double *C2 = calloc(size, sizeof(double)); // for A² × B
     double *C = calloc(size, sizeof(double));  // final result
 
-    if (A == NULL || B == NULL || C1 == NULL || C2 == NULL || C == NULL)
+    if (!A || !B || !C1 || !C2 || !C)
     {
         fprintf(stderr, "Memory allocation failed!\n");
         return 1;
     }
+
     for (int i = 0; i < size; ++i)
     {
         A[i] = 1.0;
@@ -76,8 +85,7 @@ int main()
     {
         double start = get_time();
 
-        printf("Starting run %d...\n", rep + 1);
-        printf("Size for the matrice is  %d...\n", N);
+        printf("Run %d: Computing C = B*Aᵀ + A²*B for N = %d\n", rep + 1, N);
 
         matmul_transpose(A, B, C1, N); // C1 = B × Aᵀ
 
@@ -90,12 +98,12 @@ int main()
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
-        printf("Run %d: %.6f seconds\n", rep + 1, elapsed);
+        printf("Run %d completed in %.6f seconds\n", rep + 1, elapsed);
 
         free(A_squared);
     }
 
-    printf("Average time over %d runs: N=%d → %.6f seconds\n", NUM_REPS, N, total_time / NUM_REPS);
+    printf("Average time over %d runs for N = %d: %.6f seconds\n", NUM_REPS, N, total_time / NUM_REPS);
 
     free(A);
     free(B);
