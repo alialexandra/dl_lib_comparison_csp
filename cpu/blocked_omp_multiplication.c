@@ -15,21 +15,32 @@
 #define NUM_REPS 3
 #endif
 
-#ifndef THREADS
-#define THREADS 4
-#endif
-
-void blocked_multiply_omp(double *A, double *B, double *C, int n, int block_size)
+void transpose(double *A, double *A_T, int n)
 {
 #pragma omp parallel for collapse(2)
-    for (int bi = 0; bi < n; bi += block_size)
-        for (int bj = 0; bj < n; bj += block_size)
-            for (int bk = 0; bk < n; bk += block_size)
-                for (int i = bi; i < bi + block_size && i < n; ++i)
-                    for (int j = bj; j < bj + block_size && j < n; ++j)
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+            A_T[j * n + i] = A[i * n + j];
+}
+
+void matrix_add(double *A, double *B, double *C, int n)
+{
+#pragma omp parallel for
+    for (int i = 0; i < n * n; ++i)
+        C[i] = A[i] + B[i];
+}
+
+void bmm_blocked_omp(double *A, double *B, double *C, int n, int bs)
+{
+#pragma omp parallel for collapse(2)
+    for (int bi = 0; bi < n; bi += bs)
+        for (int bj = 0; bj < n; bj += bs)
+            for (int bk = 0; bk < n; bk += bs)
+                for (int i = bi; i < bi + bs && i < n; ++i)
+                    for (int j = bj; j < bj + bs && j < n; ++j)
                     {
                         double sum = 0.0;
-                        for (int k = bk; k < bk + block_size && k < n; ++k)
+                        for (int k = bk; k < bk + bs && k < n; ++k)
                             sum += A[i * n + k] * B[k * n + j];
                         C[i * n + j] += sum;
                     }
@@ -47,6 +58,8 @@ int main()
     int size = N * N;
     double *A = malloc(size * sizeof(double));
     double *B = malloc(size * sizeof(double));
+    double *C1 = calloc(size, sizeof(double));
+    double *C2 = calloc(size, sizeof(double));
     double *C = calloc(size, sizeof(double));
 
     for (int i = 0; i < size; ++i)
@@ -55,31 +68,38 @@ int main()
         B[i] = 2.0;
     }
 
-    int threads = THREADS;
-    char *env_threads = getenv("OMP_NUM_THREADS");
-    if (env_threads != NULL)
-        threads = atoi(env_threads);
-
-    omp_set_num_threads(threads);
-
-    printf("Running with N=%d, BLOCK_SIZE=%d, THREADS=%d (env or compile-time)\n", N, BLOCK_SIZE, threads);
-
     double total_time = 0.0;
 
     for (int rep = 0; rep < NUM_REPS; ++rep)
     {
+        double *A_T = malloc(size * sizeof(double));
+        double *A2 = calloc(size, sizeof(double));
+
         double start = get_time();
-        blocked_multiply_omp(A, B, C, N, BLOCK_SIZE);
+
+        transpose(A, A_T, N);
+        bmm_blocked_omp(B, A_T, C1, N, BLOCK_SIZE);
+        bmm_blocked_omp(A, A, A2, N, BLOCK_SIZE);
+        bmm_blocked_omp(A2, B, C2, N, BLOCK_SIZE);
+        matrix_add(C1, C2, C, N);
+
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
         printf("Run %d: %.6f seconds\n", rep + 1, elapsed);
+
+        free(A_T);
+        free(A2);
+        for (int i = 0; i < size; ++i)
+            C1[i] = C2[i] = 0.0;
     }
 
-    printf("Average time over %d runs: %.6f seconds\n", NUM_REPS, total_time / NUM_REPS);
+    printf("Blocked + OMP C = B*Aᵀ + A²*B: N=%d → Avg = %.6f s\n", N, total_time / NUM_REPS);
 
     free(A);
     free(B);
+    free(C1);
+    free(C2);
     free(C);
     return 0;
 }

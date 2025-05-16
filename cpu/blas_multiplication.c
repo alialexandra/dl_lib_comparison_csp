@@ -23,7 +23,16 @@ int main()
     int size = N * N;
     double *A = malloc(size * sizeof(double));
     double *B = malloc(size * sizeof(double));
-    double *C = calloc(size, sizeof(double));
+    double *A2 = malloc(size * sizeof(double));
+    double *C1 = malloc(size * sizeof(double));
+    double *C2 = malloc(size * sizeof(double));
+    double *C = malloc(size * sizeof(double));
+
+    if (!A || !B || !A2 || !C1 || !C2 || !C)
+    {
+        fprintf(stderr, "Memory allocation failed!\n");
+        return 1;
+    }
 
     for (int i = 0; i < size; ++i)
     {
@@ -37,21 +46,37 @@ int main()
     {
         double start = get_time();
 
-        // cblas_dgemm(order, transA, transB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc)
+        // C1 = B × Aᵀ
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                    N, N, N, 1.0, B, N, A, N, 0.0, C1, N);
+
+        // A2 = A × A
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                    N, N, N, 1.0, A, N, B, N, 0.0, C, N);
+                    N, N, N, 1.0, A, N, A, N, 0.0, A2, N);
+
+        // C2 = A2 × B
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                    N, N, N, 1.0, A2, N, B, N, 0.0, C2, N);
+
+        // C = C1 + C2
+        for (int i = 0; i < size; ++i)
+            C[i] = C1[i] + C2[i];
 
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
+
         printf("Run %d: %.6f seconds\n", rep + 1, elapsed);
     }
 
-    printf("BLAS: Average time over %d runs for N=%d → %.6f seconds\n",
-           NUM_REPS, N, total_time / NUM_REPS);
+    printf("BLAS: C = B*Aᵀ + A²*B | N=%d → Avg time over %d runs: %.6f seconds\n",
+           N, NUM_REPS, total_time / NUM_REPS);
 
     free(A);
     free(B);
+    free(A2);
+    free(C1);
+    free(C2);
     free(C);
     return 0;
 }
