@@ -101,4 +101,18 @@ gcc -O3 -march=native -ffast-math -fassociative-math \
  -DN=1024 -DNUM_REPS=3 -o blas_multiplication_flags blas_multiplication.c -lopenblas
 ./blas_multiplication_flags
 
+======================================================================================================================================
+
 gpu/
+
+# Naive version
+
+nvcc -O3 -DN=1024 -DNUM_REPS=3 -o naive naive.cu
+
+# Shared memory
+
+nvcc -O3 -DN=1024 -DNUM_REPS=3 -DTILE_SIZE=16 -o shared_mem shared_mem.cu
+
+# cuBLAS
+
+nvcc -O3 -DN=1024 -DNUM_REPS=3 -lcublas -o cublas cublas.cu
