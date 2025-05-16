@@ -9,41 +9,31 @@ cpu/
 Simply measuring the running times for different sizes for the matrices.
 compilation:
 
-gcc -O3 -o naive_cpu naive_cpu.c
-./naive_cpu
-
-compilation with different sizez for the matrice:
-
-gcc -O3 -DN=2048 -o naive_cpu naive_cpu.c
-
-N should be varied from lets say: 256, 512, 1024, 2048, 4096, 8192, 16 384, etc, will set a limit for when is becoming to slow to follow
-
-each experiment will be run 3 times and the average will be taken in consideration for measurements.
+gcc -O3 -o naive_multiplication naive_multiplication.c
+./naive_multiplication 1200
 
 2. blocked_multiplication.c
-   gcc -O3 -DN=1024 -DBLOCK_SIZE=64 -DNUM_REPS=3 -o blocked_cpu blocked_multiplication.c
 
-again dn will be the matrix size and also the block size should be varied
+   gcc -O3 -o blocked_multiplication blocked_multiplication.c
+
+   ./blocked_multiplication 1024 32
 
 3. blocked_multiplication_omp.c
    in this implemnetation we have added blocked multiplication and also paralelisation
 
 // no SIMD
 
-gcc -O3 -march=native -ffast-math -fopenmp
--DN=2048 -DBLOCK_SIZE=64 -DTHREADS=8 -DNUM_REPS=5
--o blocked_omp_multiplication blocked_omp_multiplication.c
-./blocked_omp_multiplication
+gcc -O3 -fopenmp -o blocked_omp_multiplication blocked_omp_multiplication.c
+
+./blocked_omp_multiplication 1024 64 4
 
 we can run normaly with no flags or using also SIMD flags for comparing newly obtained times
 
 // with SIMD
 
-gcc -O3 -march=native -fopenmp
--fno-signed-zeros -ffinite-math-only
--fno-signaling-nans -fno-trapping-math
--fassociative-math -fexcess-precision=fast -mfpmath=sse -DN=2048 -DBLOCK_SIZE=64 -DTHREADS=8 -DNUM_REPS=5 -o blocked_omp_multiplication_flags blocked_omp_multiplication.c
-./blocked_omp_multiplication_flags
+gcc -O3 -march=native -fopenmp -ffast-math -fno-signed-zeros -ffinite-math-only -fno-signaling-nans -fno-trapping-math -fassociative-math -fexcess-precision=fast -mfpmath=sse -o blocked_omp_multiplication_optimised blocked_omp_multiplication.c
+
+./blocked_omp_multiplication_optimised
 
 -march=native enables architecture-specific SIMD (SSE, AVX)
 
@@ -66,6 +56,16 @@ In addition to standard compiler optimizations (-O3), we enabled a set of math-s
 These flags are part of a finer-grained breakdown of the more aggressive -ffast-math flag. By explicitly selecting only those relevant to our workload, we aim to gain performance without compromising correctness
 
 4. using a dedicated library, CBLAS
+
+Libraries like OpenBLAS, MKL, or cuBLAS are already multi-threaded and optimized for your CPU/GPU architecture.
+
+They automatically use:
+
+SIMD/vector instructions (e.g., AVX)
+
+Thread pools (e.g., via OpenMP or pthreads)
+
+Cache-aware algorithms
 
 Metric - Insight
 

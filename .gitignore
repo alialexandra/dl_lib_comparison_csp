@@ -179,3 +179,7 @@ cython_debug/
 **/a.out
 **/*.o
 **/*.obj
+**/naive_multiplication
+**/blocked_multiplication
+**/blocked_omp_multiplication_optimised
+**/blocked_omp_multiplication
