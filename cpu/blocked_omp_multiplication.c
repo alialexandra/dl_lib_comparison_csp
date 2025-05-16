@@ -82,7 +82,6 @@ int main()
         bmm_blocked_omp(A, A, A2, N, BLOCK_SIZE);
         bmm_blocked_omp(A2, B, C2, N, BLOCK_SIZE);
         matrix_add(C1, C2, C, N);
-        printf("C[0][0] = %f\n", C[0]);
 
         double end = get_time();
         double elapsed = end - start;
