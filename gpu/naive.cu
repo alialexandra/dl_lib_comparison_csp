@@ -4,7 +4,7 @@
 #include <cublas_v2.h>
 
 #ifndef NUM_REPS
-#define NUM_REPS 3
+#define NUM_REPS 10
 #endif
 
 __global__ void matrixMulKernel(const double *A, const double *B, double *C, int n)
@@ -90,14 +90,14 @@ int main(int argc, char **argv)
     printf("Naive GPU: N=%d → Avg time = %.6f seconds\n", N, avg_time);
 
     // Save results to CSV
-    FILE *log = fopen("naive_gpu_results.csv", "a");
-    if (log)
-    {
-        fprintf(log, "%d,%d,%d,%.6f,%zu,%zu\n",
-                N, threadsPerBlock.x, blocksPerGrid.x,
-                avg_time, total_mem, free_mem);
-        fclose(log);
-    }
+    // FILE *log = fopen("naive_gpu_results.csv", "a");
+    // if (log)
+    // {
+    //     fprintf(log, "%d,%d,%d,%.6f,%zu,%zu\n",
+    //             N, threadsPerBlock.x, blocksPerGrid.x,
+    //             avg_time, total_mem, free_mem);
+    //     fclose(log);
+    // }
 
     cudaFree(d_A);
     cudaFree(d_B);

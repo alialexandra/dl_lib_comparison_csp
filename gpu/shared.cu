@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
+#ifndef NUM_REPS
+#define NUM_REPS 10
+#endif
+
 __global__ void matrixMulShared(const double *A, const double *B, double *C, int n, int tileSize)
 {
     extern __shared__ double shared[];
@@ -32,7 +36,7 @@ double gpu_timer(cudaEvent_t start, cudaEvent_t stop)
 {
     float ms;
     cudaEventElapsedTime(&ms, start, stop);
-    return ms / 1000.0;
+    return ms; // return milliseconds directly
 }
 
 int main(int argc, char **argv)
@@ -44,8 +48,7 @@ int main(int argc, char **argv)
     }
 
     int N = atoi(argv[1]);
-    int TILE_SIZE = atoi(argv[2]);
-    int NUM_REPS = 3;
+    int tileSize = atoi(argv[2]);
 
     size_t size = N * N * sizeof(double);
     double *h_A = (double *)malloc(size);
@@ -66,9 +69,9 @@ int main(int argc, char **argv)
     cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
 
-    dim3 threads(TILE_SIZE, TILE_SIZE);
-    dim3 blocks(N / TILE_SIZE, N / TILE_SIZE);
-    size_t sharedMemSize = 2 * TILE_SIZE * TILE_SIZE * sizeof(double);
+    dim3 threads(tileSize, tileSize);
+    dim3 blocks((N + tileSize - 1) / tileSize, (N + tileSize - 1) / tileSize);
+    size_t sharedMemSize = 2 * tileSize * tileSize * sizeof(double);
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -79,25 +82,14 @@ int main(int argc, char **argv)
     {
         cudaMemset(d_C, 0, size);
         cudaEventRecord(start);
-        matrixMulShared<<<blocks, threads, sharedMemSize>>>(d_A, d_B, d_C, N, TILE_SIZE);
+        matrixMulShared<<<blocks, threads, sharedMemSize>>>(d_A, d_B, d_C, N, tileSize);
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         total += gpu_timer(start, stop);
     }
 
-    size_t free_mem, total_mem;
-    cudaMemGetInfo(&free_mem, &total_mem);
-
     double avg_time = total / NUM_REPS;
-    printf("Shared GPU: N=%d TILE_SIZE=%d → Avg time = %.6f seconds\n", N, TILE_SIZE, avg_time);
-
-    FILE *log = fopen("shared_gpu_results.csv", "a");
-    if (log)
-    {
-        fprintf(log, "%d,%d,%d,%.6f,%zu,%zu\n",
-                N, TILE_SIZE, blocks.x, avg_time, total_mem, free_mem);
-        fclose(log);
-    }
+    printf("Shared GPU: N=%d TILE_SIZE=%d → Avg time = %.6f ms\n", N, tileSize, avg_time);
 
     cudaFree(d_A);
     cudaFree(d_B);

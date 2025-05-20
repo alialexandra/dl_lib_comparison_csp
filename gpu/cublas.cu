@@ -3,6 +3,10 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
+#ifndef NUM_REPS
+#define NUM_REPS 3
+#endif
+
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -12,12 +16,17 @@ int main(int argc, char **argv)
     }
 
     int N = atoi(argv[1]);
-    int NUM_REPS = 3;
-
     size_t size = N * N * sizeof(double);
+
+    // Host memory allocation
     double *h_A = (double *)malloc(size);
     double *h_B = (double *)malloc(size);
     double *h_C = (double *)malloc(size);
+    if (!h_A || !h_B || !h_C)
+    {
+        fprintf(stderr, "Host memory allocation failed\n");
+        return 1;
+    }
 
     for (int i = 0; i < N * N; ++i)
     {
@@ -25,11 +34,20 @@ int main(int argc, char **argv)
         h_B[i] = 2.0;
     }
 
+    // Device memory allocation
     double *d_A, *d_B, *d_C;
-    cudaMalloc(&d_A, size);
-    cudaMalloc(&d_B, size);
-    cudaMalloc(&d_C, size);
+    if (cudaMalloc(&d_A, size) != cudaSuccess ||
+        cudaMalloc(&d_B, size) != cudaSuccess ||
+        cudaMalloc(&d_C, size) != cudaSuccess)
+    {
+        fprintf(stderr, "Device memory allocation failed (likely out of memory)\n");
+        free(h_A);
+        free(h_B);
+        free(h_C);
+        return 1;
+    }
 
+    // Copy data to device
     cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
     cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
 
@@ -47,28 +65,24 @@ int main(int argc, char **argv)
     {
         cudaMemset(d_C, 0, size);
         cudaEventRecord(start);
-        cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                    N, N, N, &alpha, d_A, N, d_B, N, &beta, d_C, N);
+        cublasStatus_t stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                                          N, N, N, &alpha, d_A, N, d_B, N, &beta, d_C, N);
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
+
+        if (stat != CUBLAS_STATUS_SUCCESS)
+        {
+            fprintf(stderr, "cuBLAS DGEMM failed for N = %d\n", N);
+            break;
+        }
 
         float ms;
         cudaEventElapsedTime(&ms, start, stop);
         total += ms / 1000.0;
     }
 
-    size_t free_mem, total_mem;
-    cudaMemGetInfo(&free_mem, &total_mem);
-
     double avg_time = total / NUM_REPS;
     printf("cuBLAS DGEMM: N=%d → Avg time = %.6f seconds\n", N, avg_time);
-
-    FILE *log = fopen("cublas_results.csv", "a");
-    if (log)
-    {
-        fprintf(log, "%d,%.6f,%zu,%zu\n", N, avg_time, total_mem, free_mem);
-        fclose(log);
-    }
 
     cublasDestroy(handle);
     cudaFree(d_A);
