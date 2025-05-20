@@ -3,10 +3,6 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
-#ifndef N
-#define N 1024
-#endif
-
 #ifndef NUM_REPS
 #define NUM_REPS 3
 #endif
@@ -19,9 +15,7 @@ __global__ void matrixMulKernel(const double *A, const double *B, double *C, int
     {
         double sum = 0.0;
         for (int k = 0; k < n; ++k)
-        {
             sum += A[row * n + k] * B[k * n + col];
-        }
         C[row * n + col] = sum;
     }
 }
@@ -33,8 +27,23 @@ double gpu_timer(cudaEvent_t start, cudaEvent_t stop)
     return ms / 1000.0; // seconds
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc < 2)
+    {
+        fprintf(stderr, "Usage: %s <matrix_size>\n", argv[0]);
+        return 1;
+    }
+
+    int N = atoi(argv[1]);
+    if (N <= 0)
+    {
+        fprintf(stderr, "Invalid matrix size: %d\n", N);
+        return 1;
+    }
+
+    printf("Running matrix multiplication with N = %d\n", N);
+
     int size = N * N * sizeof(double);
     double *h_A = (double *)malloc(size);
     double *h_B = (double *)malloc(size);
@@ -72,7 +81,23 @@ int main()
         total += gpu_timer(start, stop);
     }
 
-    printf("Naive GPU (global memory): N=%d → Avg time = %.6f seconds\n", N, total / NUM_REPS);
+    // Log memory info
+    size_t free_mem, total_mem;
+    cudaMemGetInfo(&free_mem, &total_mem);
+
+    // Print summary
+    double avg_time = total / NUM_REPS;
+    printf("Naive GPU: N=%d → Avg time = %.6f seconds\n", N, avg_time);
+
+    // Save results to CSV
+    FILE *log = fopen("naive_gpu_results.csv", "a");
+    if (log)
+    {
+        fprintf(log, "%d,%d,%d,%.6f,%zu,%zu\n",
+                N, threadsPerBlock.x, blocksPerGrid.x,
+                avg_time, total_mem, free_mem);
+        fclose(log);
+    }
 
     cudaFree(d_A);
     cudaFree(d_B);

@@ -3,10 +3,6 @@
 #include <sys/time.h>
 #include <cblas.h>
 
-#ifndef N
-#define N 1024
-#endif
-
 #ifndef NUM_REPS
 #define NUM_REPS 3
 #endif
@@ -18,8 +14,21 @@ double get_time()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc < 2)
+    {
+        fprintf(stderr, "Usage: %s <N>\n", argv[0]);
+        return 1;
+    }
+
+    int N = atoi(argv[1]);
+    if (N <= 0)
+    {
+        fprintf(stderr, "Invalid matrix size: %s\n", argv[1]);
+        return 1;
+    }
+
     int size = N * N;
     double *A = malloc(size * sizeof(double));
     double *B = malloc(size * sizeof(double));

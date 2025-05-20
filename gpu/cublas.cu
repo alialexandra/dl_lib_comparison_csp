@@ -3,17 +3,18 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
-#ifndef N
-#define N 1024
-#endif
-
-#ifndef NUM_REPS
-#define NUM_REPS 3
-#endif
-
-int main()
+int main(int argc, char **argv)
 {
-    int size = N * N * sizeof(double);
+    if (argc < 2)
+    {
+        fprintf(stderr, "Usage: %s <matrix_size>\n", argv[0]);
+        return 1;
+    }
+
+    int N = atoi(argv[1]);
+    int NUM_REPS = 3;
+
+    size_t size = N * N * sizeof(double);
     double *h_A = (double *)malloc(size);
     double *h_B = (double *)malloc(size);
     double *h_C = (double *)malloc(size);
@@ -46,10 +47,8 @@ int main()
     {
         cudaMemset(d_C, 0, size);
         cudaEventRecord(start);
-
         cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
                     N, N, N, &alpha, d_A, N, d_B, N, &beta, d_C, N);
-
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
 
@@ -58,7 +57,18 @@ int main()
         total += ms / 1000.0;
     }
 
-    printf("cuBLAS DGEMM: N=%d → Avg time = %.6f seconds\n", N, total / NUM_REPS);
+    size_t free_mem, total_mem;
+    cudaMemGetInfo(&free_mem, &total_mem);
+
+    double avg_time = total / NUM_REPS;
+    printf("cuBLAS DGEMM: N=%d → Avg time = %.6f seconds\n", N, avg_time);
+
+    FILE *log = fopen("cublas_results.csv", "a");
+    if (log)
+    {
+        fprintf(log, "%d,%.6f,%zu,%zu\n", N, avg_time, total_mem, free_mem);
+        fclose(log);
+    }
 
     cublasDestroy(handle);
     cudaFree(d_A);

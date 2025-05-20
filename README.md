@@ -10,6 +10,11 @@ Simply measuring the running times for different sizes for the matrices.
 compilation:
 
 gcc -O3 -o naive_multiplication naive_multiplication.c
+
+//with simd flags
+
+gcc -O3 -march=native -ffast-math -fno-signed-zeros -ffinite-math-only -fno-signaling-nans -fno-trapping-math -fassociative-math -fexcess-precision=fast -mfpmath=sse -o naive_multiplication naive_multiplication.c
+
 ./naive_multiplication 1200
 
 2. blocked_multiplication.c
@@ -71,7 +76,7 @@ Metric - Insight
 
 Time vs blocked - CPU How good your hand-tuned CPU really is
 Time vs GPU cuBLAS - CPU vs GPU library comparison
-
+GPU VS CPU
 Efficiency ceiling - What is achievable without full rewrite
 
 sudo apt-get install libopenblas-dev
@@ -98,8 +103,9 @@ gcc -O3 -march=native -ffast-math -fassociative-math \
  -fno-signed-zeros -ffinite-math-only \
  -fno-signaling-nans -fno-trapping-math \
  -fexcess-precision=fast -mfpmath=sse \
- -DN=1024 -DNUM_REPS=3 -o blas_multiplication_flags blas_multiplication.c -lopenblas
-./blas_multiplication_flags
+ -DN=1024 -DNUM_REPS=3 -o blas_multiplication blas_multiplication.c -lopenblas
+
+./blas_multiplication N
 
 ======================================================================================================================================
 

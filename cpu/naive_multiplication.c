@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     {
         double start = get_time();
 
-        printf("Run %d: Computing C = B*Aᵀ + A²*B for N = %d\n", rep + 1, N);
+        // printf("Run %d: Computing C = B*Aᵀ + A²*B for N = %d\n", rep + 1, N);
 
         matmul_transpose(A, B, C1, N); // C1 = B × Aᵀ
 
@@ -98,12 +98,12 @@ int main(int argc, char **argv)
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
-        printf("Run %d completed in %.6f seconds\n", rep + 1, elapsed);
+        // printf("Run %d completed in %.6f seconds\n", rep + 1, elapsed);
 
         free(A_squared);
     }
 
-    printf("Average time over %d runs for N = %d: %.6f seconds\n", NUM_REPS, N, total_time / NUM_REPS);
+    printf("Average for N = %d: %.6f seconds\n", NUM_REPS, N, total_time / NUM_REPS);
 
     free(A);
     free(B);

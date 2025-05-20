@@ -2,36 +2,25 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#ifndef N
-#define N 1024
-#endif
-
-#ifndef TILE_SIZE
-#define TILE_SIZE 16
-#endif
-
-#ifndef NUM_REPS
-#define NUM_REPS 3
-#endif
-
-__global__ void matrixMulShared(const double *A, const double *B, double *C, int n)
+__global__ void matrixMulShared(const double *A, const double *B, double *C, int n, int tileSize)
 {
-    __shared__ double tileA[TILE_SIZE][TILE_SIZE];
-    __shared__ double tileB[TILE_SIZE][TILE_SIZE];
+    extern __shared__ double shared[];
+    double *tileA = shared;
+    double *tileB = &shared[tileSize * tileSize];
 
-    int row = blockIdx.y * TILE_SIZE + threadIdx.y;
-    int col = blockIdx.x * TILE_SIZE + threadIdx.x;
+    int row = blockIdx.y * tileSize + threadIdx.y;
+    int col = blockIdx.x * tileSize + threadIdx.x;
 
     double sum = 0.0;
 
-    for (int tile = 0; tile < n / TILE_SIZE; ++tile)
+    for (int tile = 0; tile < n / tileSize; ++tile)
     {
-        tileA[threadIdx.y][threadIdx.x] = A[row * n + tile * TILE_SIZE + threadIdx.x];
-        tileB[threadIdx.y][threadIdx.x] = B[(tile * TILE_SIZE + threadIdx.y) * n + col];
+        tileA[threadIdx.y * tileSize + threadIdx.x] = A[row * n + tile * tileSize + threadIdx.x];
+        tileB[threadIdx.y * tileSize + threadIdx.x] = B[(tile * tileSize + threadIdx.y) * n + col];
         __syncthreads();
 
-        for (int k = 0; k < TILE_SIZE; ++k)
-            sum += tileA[threadIdx.y][k] * tileB[k][threadIdx.x];
+        for (int k = 0; k < tileSize; ++k)
+            sum += tileA[threadIdx.y * tileSize + k] * tileB[k * tileSize + threadIdx.x];
 
         __syncthreads();
     }
@@ -46,9 +35,19 @@ double gpu_timer(cudaEvent_t start, cudaEvent_t stop)
     return ms / 1000.0;
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    int size = N * N * sizeof(double);
+    if (argc < 3)
+    {
+        fprintf(stderr, "Usage: %s <matrix_size> <tile_size>\n", argv[0]);
+        return 1;
+    }
+
+    int N = atoi(argv[1]);
+    int TILE_SIZE = atoi(argv[2]);
+    int NUM_REPS = 3;
+
+    size_t size = N * N * sizeof(double);
     double *h_A = (double *)malloc(size);
     double *h_B = (double *)malloc(size);
     double *h_C = (double *)malloc(size);
@@ -69,6 +68,7 @@ int main()
 
     dim3 threads(TILE_SIZE, TILE_SIZE);
     dim3 blocks(N / TILE_SIZE, N / TILE_SIZE);
+    size_t sharedMemSize = 2 * TILE_SIZE * TILE_SIZE * sizeof(double);
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -79,14 +79,25 @@ int main()
     {
         cudaMemset(d_C, 0, size);
         cudaEventRecord(start);
-        matrixMulShared<<<blocks, threads>>>(d_A, d_B, d_C, N);
+        matrixMulShared<<<blocks, threads, sharedMemSize>>>(d_A, d_B, d_C, N, TILE_SIZE);
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
         total += gpu_timer(start, stop);
     }
 
-    printf("GPU Shared Memory: N=%d TILE_SIZE=%d → Avg time = %.6f seconds\n",
-           N, TILE_SIZE, total / NUM_REPS);
+    size_t free_mem, total_mem;
+    cudaMemGetInfo(&free_mem, &total_mem);
+
+    double avg_time = total / NUM_REPS;
+    printf("Shared GPU: N=%d TILE_SIZE=%d → Avg time = %.6f seconds\n", N, TILE_SIZE, avg_time);
+
+    FILE *log = fopen("shared_gpu_results.csv", "a");
+    if (log)
+    {
+        fprintf(log, "%d,%d,%d,%.6f,%zu,%zu\n",
+                N, TILE_SIZE, blocks.x, avg_time, total_mem, free_mem);
+        fclose(log);
+    }
 
     cudaFree(d_A);
     cudaFree(d_B);
