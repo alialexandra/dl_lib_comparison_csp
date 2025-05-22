@@ -29,7 +29,6 @@ for N in 256 512 1024 2048 4096 8192; do
   nvidia-smi --query-gpu=timestamp,power.draw,clocks.current.graphics,temperature.gpu --format=csv -l 0.1 > "$CLOCK_LOG" &
   SMI_PID=$!
 
-  ./$EXE $N >/dev/null
   OUTPUT=$(./$EXE $N)
 
   kill $SMI_PID
@@ -60,8 +59,12 @@ for N in 256 512 1024 2048 4096 8192; do
   GFLOPS_PER_WATT=$(awk -v g=$GFLOPS -v p=$AVG_PWR 'BEGIN { print (p > 0 ? g / p : 0) }')
   ENERGY_PER_FLOP_PJ=$(awk -v e=$ENERGY_MJ -v f=$FLOPS 'BEGIN { print (f > 0 ? (e * 1e6) / f : 0) }')
 
-  OCCUPANCY=$(echo "$OUTPUT" | grep "Occupancy" | awk -F'≈ ' '{print $2}' | awk -F'%' '{print $1}')
+  OCCUPANCY=$(nvprof --metrics achieved_occupancy ./naive $N 2>&1 | \
+    grep -i achieved_occupancy | tail -1 | awk '{print $(NF)}')
+
+    # Fallback or cleanup
   [[ ! "$OCCUPANCY" =~ ^[0-9]+(\.[0-9]+)?$ ]] && OCCUPANCY="0.0"
+  OCCUPANCY=$(awk -v occ=$OCCUPANCY 'BEGIN { printf("%.2f", occ * 100) }')
 
   SHARED_MEM_BYTES=$(echo "$OUTPUT" | grep "Shared memory per block" | awk -F': ' '{print $2}' | awk '{print $1}')
   [[ ! "$SHARED_MEM_BYTES" =~ ^[0-9]+$ ]] && SHARED_MEM_BYTES="0"

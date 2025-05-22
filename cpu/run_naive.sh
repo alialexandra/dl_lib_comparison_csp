@@ -24,7 +24,8 @@ if [ ! -f "$RESULTS_CSV" ]; then
   echo "N,avg_time_sec,avg_power_watts,energy_mJ,gflops,gflops_per_watt,energy_per_flop_pj,occupancy_percent" > "$RESULTS_CSV"
 fi
 
-for N in 256 512 1024 2048 4096 8192; do
+# for the sake of the argument and in matter of time we will not use the full range of N
+for N in 256 512 1024 2048; do
   echo "Running CPU kernel: N=$N"
 
   START=$(date +%s.%N)

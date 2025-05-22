@@ -29,7 +29,6 @@ for N in 256 512 1024 2048 4096 8192; do
     nvidia-smi --query-gpu=timestamp,power.draw,clocks.gr,temperature.gpu --format=csv -l 0.1 > "$CLOCK_LOG" &
     SMI_PID=$!
 
-    ./naive $N >/dev/null 2>&1  # warm-up
     OUTPUT=$(./naive $N)
 
     kill $SMI_PID
@@ -68,8 +67,14 @@ for N in 256 512 1024 2048 4096 8192; do
     ENERGY_PER_FLOP_PJ=$(awk -v e=$ENERGY_MJ -v f=$FLOPS 'BEGIN { print (f > 0 ? (e * 1e6) / f : 0) }')
 
     # Occupancy
-    OCCUPANCY=$(echo "$OUTPUT" | grep "Occupancy" | awk -F'≈ ' '{print $2}' | awk -F'%' '{print $1}')
+    # Measure occupancy via nvprof (fallback to 0 if not found)
+    OCCUPANCY=$(nvprof --metrics achieved_occupancy ./naive $N 2>&1 | \
+        grep -i achieved_occupancy | tail -1 | awk '{print $(NF)}')
+
+    # Fallback or cleanup
     [[ ! "$OCCUPANCY" =~ ^[0-9]+(\.[0-9]+)?$ ]] && OCCUPANCY="0.0"
+    OCCUPANCY=$(awk -v occ=$OCCUPANCY 'BEGIN { printf("%.2f", occ * 100) }')  # Convert to percentage
+
 
     echo "$N,$THREADS,$BLOCKS,$AVG_TIME_MS,$AVG_PWR,$ENERGY_MJ,$((TOTAL_MEM*1024*1024)),$((FREE_MEM*1024*1024)),$AVG_CLOCK,$MIN_CLOCK,$MAX_CLOCK,$AVG_TEMP,$GFLOPS,$GFLOPS_PER_WATT,$ENERGY_PER_FLOP_PJ,$OCCUPANCY" >> "$RESULTS_CSV"
     echo "$OUTPUT" >> "$RESULTS_OUTPUT" 

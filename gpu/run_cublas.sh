@@ -27,7 +27,6 @@ for N in 256 512 1024 2048 4096 8192; do
   nvidia-smi --query-gpu=timestamp,power.draw,clocks.current.graphics,temperature.gpu --format=csv -l 0.1 > "$CLOCK_LOG" &
   SMI_PID=$!
 
-  ./$EXE $N >/dev/null
   OUTPUT=$(./$EXE $N)
 
   kill $SMI_PID

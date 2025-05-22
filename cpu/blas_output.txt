@@ -1,0 +1,60 @@
+BLAS: N=256 | Avg time = 0.002244 seconds | Threads used: 2
+some of the results: C[0] = 131584.000000, C[65535] = 131584.000000
+BLAS: N=256 | Avg time = 0.001475 seconds | Threads used: 4
+some of the results: C[0] = 131584.000000, C[65535] = 131584.000000
+BLAS: N=256 | Avg time = 0.005585 seconds | Threads used: 8
+some of the results: C[0] = 131584.000000, C[65535] = 131584.000000
+BLAS: N=256 | Avg time = 0.042070 seconds | Threads used: 16
+some of the results: C[0] = 131584.000000, C[65535] = 131584.000000
+BLAS: N=256 | Avg time = 0.022235 seconds | Threads used: 16
+some of the results: C[0] = 131584.000000, C[65535] = 131584.000000
+BLAS: N=512 | Avg time = 0.012186 seconds | Threads used: 2
+some of the results: C[0] = 525312.000000, C[262143] = 525312.000000
+BLAS: N=512 | Avg time = 0.006878 seconds | Threads used: 4
+some of the results: C[0] = 525312.000000, C[262143] = 525312.000000
+BLAS: N=512 | Avg time = 0.007697 seconds | Threads used: 8
+some of the results: C[0] = 525312.000000, C[262143] = 525312.000000
+BLAS: N=512 | Avg time = 0.044702 seconds | Threads used: 16
+some of the results: C[0] = 525312.000000, C[262143] = 525312.000000
+BLAS: N=512 | Avg time = 0.070414 seconds | Threads used: 16
+some of the results: C[0] = 525312.000000, C[262143] = 525312.000000
+BLAS: N=1024 | Avg time = 0.087190 seconds | Threads used: 2
+some of the results: C[0] = 2099200.000000, C[1048575] = 2099200.000000
+BLAS: N=1024 | Avg time = 0.083309 seconds | Threads used: 4
+some of the results: C[0] = 2099200.000000, C[1048575] = 2099200.000000
+BLAS: N=1024 | Avg time = 0.056568 seconds | Threads used: 8
+some of the results: C[0] = 2099200.000000, C[1048575] = 2099200.000000
+BLAS: N=1024 | Avg time = 0.076902 seconds | Threads used: 16
+some of the results: C[0] = 2099200.000000, C[1048575] = 2099200.000000
+BLAS: N=1024 | Avg time = 0.121512 seconds | Threads used: 16
+some of the results: C[0] = 2099200.000000, C[1048575] = 2099200.000000
+BLAS: N=2048 | Avg time = 0.836813 seconds | Threads used: 2
+some of the results: C[0] = 8392704.000000, C[4194303] = 8392704.000000
+BLAS: N=2048 | Avg time = 0.605386 seconds | Threads used: 4
+some of the results: C[0] = 8392704.000000, C[4194303] = 8392704.000000
+BLAS: N=2048 | Avg time = 0.355141 seconds | Threads used: 8
+some of the results: C[0] = 8392704.000000, C[4194303] = 8392704.000000
+BLAS: N=2048 | Avg time = 0.449688 seconds | Threads used: 16
+some of the results: C[0] = 8392704.000000, C[4194303] = 8392704.000000
+BLAS: N=2048 | Avg time = 0.394592 seconds | Threads used: 16
+some of the results: C[0] = 8392704.000000, C[4194303] = 8392704.000000
+BLAS: N=4096 | Avg time = 5.618032 seconds | Threads used: 2
+some of the results: C[0] = 33562624.000000, C[16777215] = 33562624.000000
+BLAS: N=4096 | Avg time = 4.684532 seconds | Threads used: 4
+some of the results: C[0] = 33562624.000000, C[16777215] = 33562624.000000
+BLAS: N=4096 | Avg time = 2.669250 seconds | Threads used: 8
+some of the results: C[0] = 33562624.000000, C[16777215] = 33562624.000000
+BLAS: N=4096 | Avg time = 2.344775 seconds | Threads used: 16
+some of the results: C[0] = 33562624.000000, C[16777215] = 33562624.000000
+BLAS: N=4096 | Avg time = 2.315309 seconds | Threads used: 16
+some of the results: C[0] = 33562624.000000, C[16777215] = 33562624.000000
+BLAS: N=8192 | Avg time = 42.960158 seconds | Threads used: 2
+some of the results: C[0] = 134234112.000000, C[67108863] = 134234112.000000
+BLAS: N=8192 | Avg time = 35.155008 seconds | Threads used: 4
+some of the results: C[0] = 134234112.000000, C[67108863] = 134234112.000000
+BLAS: N=8192 | Avg time = 20.925515 seconds | Threads used: 8
+some of the results: C[0] = 134234112.000000, C[67108863] = 134234112.000000
+BLAS: N=8192 | Avg time = 24.562127 seconds | Threads used: 16
+some of the results: C[0] = 134234112.000000, C[67108863] = 134234112.000000
+BLAS: N=8192 | Avg time = 25.565873 seconds | Threads used: 16
+some of the results: C[0] = 134234112.000000, C[67108863] = 134234112.000000

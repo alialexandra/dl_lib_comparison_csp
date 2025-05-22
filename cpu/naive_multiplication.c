@@ -3,7 +3,7 @@
 #include <sys/time.h>
 
 #ifndef NUM_REPS
-#define NUM_REPS 1
+#define NUM_REPS 10
 #endif
 
 // Naive matrix multiplication
