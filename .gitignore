@@ -189,3 +189,4 @@ cython_debug/
 **/naive
 **/shared
 
+gpu/cublas_256_20250520_233449.qdstrm
