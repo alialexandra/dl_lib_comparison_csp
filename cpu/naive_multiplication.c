@@ -103,8 +103,11 @@ int main(int argc, char **argv)
         free(A_squared);
     }
 
-    printf("Average for N = %d over %d runs: %.6f seconds\n", N, NUM_REPS, total_time / NUM_REPS);
-    printf("some of the results: C[0] = %f, C[%d] = %f\n", C[0], N * N - 1, C[N * N - 1]);
+    // printf("Average for N = %d: %.6f seconds\n", NUM_REPS, N, total_time / NUM_REPS);
+    double total = total_time / NUM_REPS;
+    double gflops = (6.0 * N * N * N) / (total * 1e9);
+    printf("%.2f %.2f\n", total, gflops);
+
 
     free(A);
     free(B);

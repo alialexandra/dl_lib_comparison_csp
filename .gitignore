@@ -183,11 +183,12 @@ cython_debug/
 **/blocked_multiplication
 **/blocked_omp_multiplication_optimised
 **/blocked_omp_multiplication
-**/blas_multiplication
 
-**/cublas
-**/naive
-**/shared
+cpu/naive
+cpu/blas
+cpu/blocked
+cpu/blocked_omp
 
-gpu/cublas_256_20250520_233449.qdstrm
-*.qdstrm
+gpu/cublas_gpu
+gpu/naive_gpu
+gpu/shared_gpu

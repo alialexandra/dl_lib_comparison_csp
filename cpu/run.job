@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH --job-name=cpu_benchmark
+#SBATCH --output=cpu_benchmark_%j.out
+#SBATCH --error=cpu_benchmark_%j.err
+#SBATCH --time=20:00:00  # no time limit
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=32G       # or 32G for extra safety
+#SBATCH --cpus-per-task=32           # Adjust to your needs
+#SBATCH --partition=cores              
+
+# Load required modules
+module load FlexiBLAS/3.4.4-GCC-13.3.0
+module load Python/3.11.3-gfbf-2023a matplotlib/3.7.2-gfbf-2023a
+# module load matplotlib/3.7.2-gfbf-2023a
+
+
+# Optional: move to your project directory
+cd $SLURM_SUBMIT_DIR
+
+
+# Run the benchmark script
+chmod +x run_benchmark.sh
+./run_benchmark.sh
+
+# Run Python plotting
+# python3 plot_results.py

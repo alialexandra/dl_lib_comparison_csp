@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <omp.h>
 
 #ifndef NUM_REPS
 #define NUM_REPS 1
@@ -9,22 +8,19 @@
 
 void transpose(double *A, double *A_T, int n)
 {
-#pragma omp parallel for collapse(2)
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < n; ++j)
             A_T[j * n + i] = A[i * n + j];
 }
 
-void matrix_add(const double *A, const double *B, double *C, int n)
+void matrix_add(double *A, double *B, double *C, int n)
 {
-#pragma omp parallel for
     for (int i = 0; i < n * n; ++i)
         C[i] = A[i] + B[i];
 }
 
-void bmm_blocked_omp(const double *A, const double *B, double *C, int n, int bs)
+void bmm_blocked(double *A, double *B, double *C, int n, int bs)
 {
-#pragma omp parallel for collapse(2)
     for (int bi = 0; bi < n; bi += bs)
         for (int bj = 0; bj < n; bj += bs)
             for (int bk = 0; bk < n; bk += bs)
@@ -47,24 +43,20 @@ double get_time()
 
 int main(int argc, char **argv)
 {
-    if (argc < 4)
+    if (argc < 3)
     {
-        fprintf(stderr, "Usage: %s <N> <BLOCK_SIZE> <NUM_THREADS>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <N> <BLOCK_SIZE>\n", argv[0]);
         return 1;
     }
 
     int N = atoi(argv[1]);
     int BLOCK_SIZE = atoi(argv[2]);
-    int NUM_THREADS = atoi(argv[3]);
 
-    if (N <= 0 || BLOCK_SIZE <= 0 || NUM_THREADS <= 0)
+    if (N <= 0 || BLOCK_SIZE <= 0)
     {
-        fprintf(stderr, "All parameters must be positive integers.\n");
+        fprintf(stderr, "Invalid input. N and BLOCK_SIZE must be positive integers.\n");
         return 1;
     }
-
-    omp_set_num_threads(NUM_THREADS);
-    // printf("Running with N=%d, BLOCK_SIZE=%d, NUM_THREADS=%d\n", N, BLOCK_SIZE, NUM_THREADS);
 
     int size = N * N;
     double *A = malloc(size * sizeof(double));
@@ -94,11 +86,11 @@ int main(int argc, char **argv)
 
         double start = get_time();
 
-        transpose(A, A_T, N);
-        bmm_blocked_omp(B, A_T, C1, N, BLOCK_SIZE);
-        bmm_blocked_omp(A, A, A2, N, BLOCK_SIZE);
-        bmm_blocked_omp(A2, B, C2, N, BLOCK_SIZE);
-        matrix_add(C1, C2, C, N);
+        transpose(A, A_T, N);                   // A_T = Aᵀ
+        bmm_blocked(B, A_T, C1, N, BLOCK_SIZE); // C1 = B × Aᵀ
+        bmm_blocked(A, A, A2, N, BLOCK_SIZE);   // A2 = A × A
+        bmm_blocked(A2, B, C2, N, BLOCK_SIZE);  // C2 = A² × B
+        matrix_add(C1, C2, C, N);               // C = C1 + C2
 
         double end = get_time();
         double elapsed = end - start;
@@ -112,8 +104,8 @@ int main(int argc, char **argv)
             C1[i] = C2[i] = 0.0;
     }
 
-    // printf("Blocked + OMP: N=%d BLOCK_SIZE=%d THREADS=%d → Avg time over %d runs: %.6f seconds\n",
-    //        N, BLOCK_SIZE, NUM_THREADS, NUM_REPS, total_time / NUM_REPS);
+    // printf("Blocked C = B*Aᵀ + A²*B: N=%d, BLOCK_SIZE=%d → Avg time over %d runs: %.6f seconds\n",
+    //        N, BLOCK_SIZE, NUM_REPS, total_time / NUM_REPS);
 
     double total = total_time / NUM_REPS;
     double gflops = (6.0 * N * N * N) / (total * 1e9);

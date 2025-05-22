@@ -5,7 +5,7 @@
 #include <openblas_config.h> // Needed for openblas_get_num_threads()
 
 #ifndef NUM_REPS
-#define NUM_REPS 3
+#define NUM_REPS 1
 #endif
 
 double get_time()
@@ -71,13 +71,15 @@ int main(int argc, char **argv)
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
+
+        // printf("Run %d: %.6f seconds\n", rep + 1, elapsed);
     }
 
-    double avg_time = total_time / NUM_REPS;
-    int used_threads = openblas_get_num_threads();
-
-    printf("BLAS: N=%d | Avg time = %.6f seconds | Threads used: %d\n", N, avg_time, used_threads);
-    printf("some of the results: C[0] = %f, C[%d] = %f\n", C[0], N * N - 1, C[N * N - 1]);
+    // printf("BLAS: C = B*Aᵀ + A²*B | N=%d → Avg time over %d runs: %.6f seconds\n",
+    //        N, NUM_REPS, total_time / NUM_REPS);
+    double total = total_time / NUM_REPS;
+    double gflops = (6.0 * N * N * N) / (total * 1e9);
+    printf("%.2f %.2f\n", total, gflops);
 
     free(A);
     free(B);
