@@ -17,10 +17,24 @@ __global__ void matrixMulShared(const double *A, const double *B, double *C, int
 
     double sum = 0.0;
 
-    for (int tile = 0; tile < n / tileSize; ++tile)
+    for (int tile = 0; tile < (n + tileSize - 1) / tileSize; ++tile)
     {
-        tileA[threadIdx.y * tileSize + threadIdx.x] = A[row * n + tile * tileSize + threadIdx.x];
-        tileB[threadIdx.y * tileSize + threadIdx.x] = B[(tile * tileSize + threadIdx.y) * n + col];
+        int tiledRowA = row;
+        int tiledColA = tile * tileSize + threadIdx.x;
+
+        if (tiledRowA < n && tiledColA < n)
+            tileA[threadIdx.y * tileSize + threadIdx.x] = A[tiledRowA * n + tiledColA];
+        else
+            tileA[threadIdx.y * tileSize + threadIdx.x] = 0.0;
+
+        int tiledRowB = tile * tileSize + threadIdx.y;
+        int tiledColB = col;
+
+        if (tiledRowB < n && tiledColB < n)
+            tileB[threadIdx.y * tileSize + threadIdx.x] = B[tiledRowB * n + tiledColB];
+        else
+            tileB[threadIdx.y * tileSize + threadIdx.x] = 0.0;
+
         __syncthreads();
 
         for (int k = 0; k < tileSize; ++k)
@@ -29,26 +43,27 @@ __global__ void matrixMulShared(const double *A, const double *B, double *C, int
         __syncthreads();
     }
 
-    C[row * n + col] = sum;
+    if (row < n && col < n)
+        C[row * n + col] = sum;
 }
 
 double gpu_timer(cudaEvent_t start, cudaEvent_t stop)
 {
     float ms;
     cudaEventElapsedTime(&ms, start, stop);
-    return ms; // return milliseconds directly
+    return ms;
 }
 
 int main(int argc, char **argv)
 {
-    if (argc < 3)
+    if (argc < 2)
     {
-        fprintf(stderr, "Usage: %s <matrix_size> <tile_size>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <matrix_size>\n", argv[0]);
         return 1;
     }
 
     int N = atoi(argv[1]);
-    int tileSize = atoi(argv[2]);
+    int tileSize = 16; // Safe and portable
 
     size_t size = N * N * sizeof(double);
     double *h_A = (double *)malloc(size);
@@ -89,7 +104,25 @@ int main(int argc, char **argv)
     }
 
     double avg_time = total / NUM_REPS;
+    // cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
+
     printf("Shared GPU: N=%d TILE_SIZE=%d → Avg time = %.6f ms\n", N, tileSize, avg_time);
+    // printf("some of the results: C[0] = %f, C[%d] = %f\n", h_C[0], N * N - 1, h_C[N * N - 1]);
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+
+    int maxThreadsPerSM = prop.maxThreadsPerMultiProcessor;
+    int numSMs = prop.multiProcessorCount;
+
+    int threadsPerBlock = threads.x * threads.y;
+    int numBlocks = blocks.x * blocks.y;
+    int totalThreads = threadsPerBlock * numBlocks;
+    int theoreticalMaxThreads = maxThreadsPerSM * numSMs;
+
+    float occupancy = 100.0f * totalThreads / theoreticalMaxThreads;
+
+    printf("Occupancy ≈ %.2f%%\n", occupancy);
+    printf("Shared memory per block: %lu bytes\n", sharedMemSize);
 
     cudaFree(d_A);
     cudaFree(d_B);

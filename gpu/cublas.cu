@@ -4,8 +4,26 @@
 #include <cublas_v2.h>
 
 #ifndef NUM_REPS
-#define NUM_REPS 3
+#define NUM_REPS 10
 #endif
+
+void checkCublas(cublasStatus_t stat, const char *msg)
+{
+    if (stat != CUBLAS_STATUS_SUCCESS)
+    {
+        fprintf(stderr, "cuBLAS error: %s (code %d)\n", msg, stat);
+        exit(EXIT_FAILURE);
+    }
+}
+
+void checkCuda(cudaError_t err, const char *msg)
+{
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "CUDA error: %s (%s)\n", msg, cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -15,16 +33,18 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    cudaFree(0);
+
     int N = atoi(argv[1]);
     size_t size = N * N * sizeof(double);
 
-    // Host memory allocation
+    // Host memory
     double *h_A = (double *)malloc(size);
     double *h_B = (double *)malloc(size);
     double *h_C = (double *)malloc(size);
     if (!h_A || !h_B || !h_C)
     {
-        fprintf(stderr, "Host memory allocation failed\n");
+        fprintf(stderr, "Host malloc failed\n");
         return 1;
     }
 
@@ -34,56 +54,54 @@ int main(int argc, char **argv)
         h_B[i] = 2.0;
     }
 
-    // Device memory allocation
+    // Device memory
     double *d_A, *d_B, *d_C;
-    if (cudaMalloc(&d_A, size) != cudaSuccess ||
-        cudaMalloc(&d_B, size) != cudaSuccess ||
-        cudaMalloc(&d_C, size) != cudaSuccess)
-    {
-        fprintf(stderr, "Device memory allocation failed (likely out of memory)\n");
-        free(h_A);
-        free(h_B);
-        free(h_C);
-        return 1;
-    }
+    checkCuda(cudaMalloc(&d_A, size), "cudaMalloc d_A");
+    checkCuda(cudaMalloc(&d_B, size), "cudaMalloc d_B");
+    checkCuda(cudaMalloc(&d_C, size), "cudaMalloc d_C");
 
-    // Copy data to device
-    cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
+    checkCuda(cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice), "Memcpy A");
+    checkCuda(cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice), "Memcpy B");
 
+    // cuBLAS setup
     cublasHandle_t handle;
-    cublasCreate(&handle);
+    checkCublas(cublasCreate(&handle), "create handle");
 
     double alpha = 1.0, beta = 0.0;
 
+    // Timing
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
-    double total = 0.0;
+    float total_ms = 0.0;
     for (int rep = 0; rep < NUM_REPS; ++rep)
     {
         cudaMemset(d_C, 0, size);
         cudaEventRecord(start);
-        cublasStatus_t stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                                          N, N, N, &alpha, d_A, N, d_B, N, &beta, d_C, N);
+
+        checkCublas(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                                N, N, N, &alpha, d_A, N, d_B, N, &beta, d_C, N),
+                    "cublasDgemm");
+
         cudaEventRecord(stop);
         cudaEventSynchronize(stop);
 
-        if (stat != CUBLAS_STATUS_SUCCESS)
-        {
-            fprintf(stderr, "cuBLAS DGEMM failed for N = %d\n", N);
-            break;
-        }
-
         float ms;
         cudaEventElapsedTime(&ms, start, stop);
-        total += ms / 1000.0;
+        total_ms += ms;
     }
 
-    double avg_time = total / NUM_REPS;
-    printf("cuBLAS DGEMM: N=%d → Avg time = %.6f seconds\n", N, avg_time);
+    float avg_time_ms = total_ms / NUM_REPS;
+    printf("cuBLAS: N=%d → Avg time = %.6f ms\n", N, avg_time_ms);
 
+    // Copy result back
+    checkCuda(cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost), "Memcpy C");
+
+    // Print example values
+    printf("some of the results: C[0] = %f, C[%d] = %f\n", h_C[0], N * N - 1, h_C[N * N - 1]);
+
+    // Clean up
     cublasDestroy(handle);
     cudaFree(d_A);
     cudaFree(d_B);
@@ -91,5 +109,6 @@ int main(int argc, char **argv)
     free(h_A);
     free(h_B);
     free(h_C);
+
     return 0;
 }

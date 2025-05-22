@@ -87,17 +87,10 @@ int main(int argc, char **argv)
 
     // Print summary
     double avg_time = total / NUM_REPS;
-    printf("Naive GPU: N=%d → Avg time = %.6f seconds\n", N, avg_time);
+    // cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost); // ← REQUIRED
 
-    // Save results to CSV
-    // FILE *log = fopen("naive_gpu_results.csv", "a");
-    // if (log)
-    // {
-    //     fprintf(log, "%d,%d,%d,%.6f,%zu,%zu\n",
-    //             N, threadsPerBlock.x, blocksPerGrid.x,
-    //             avg_time, total_mem, free_mem);
-    //     fclose(log);
-    // }
+    printf("Naive GPU: N=%d → Avg time = %.6f seconds\n", N, avg_time);
+    // printf("some of the results: C[0] = %f, C[%d] = %f\n", h_C[0], N * N - 1, h_C[N * N - 1]);
 
     cudaFree(d_A);
     cudaFree(d_B);
@@ -105,5 +98,20 @@ int main(int argc, char **argv)
     free(h_A);
     free(h_B);
     free(h_C);
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+
+    int maxThreadsPerSM = prop.maxThreadsPerMultiProcessor;
+    int numSMs = prop.multiProcessorCount;
+
+    int activeThreads = blocksPerGrid.x * blocksPerGrid.y * threadsPerBlock.x * threadsPerBlock.y;
+    int theoreticalMaxThreads = maxThreadsPerSM * numSMs;
+    float occupancy = 100.0f * activeThreads / theoreticalMaxThreads;
+
+    printf("GPU Config: ThreadsPerBlock=%d, Blocks=%d × %d, SMs=%d, MaxThreads/SM=%d\n",
+           threadsPerBlock.x * threadsPerBlock.y, blocksPerGrid.x, blocksPerGrid.y, numSMs, maxThreadsPerSM);
+    printf("Active Threads: %d, Theoretical Max: %d → Occupancy ≈ %.2f%%\n",
+           activeThreads, theoreticalMaxThreads, occupancy);
+
     return 0;
 }
