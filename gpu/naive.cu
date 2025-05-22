@@ -3,11 +3,7 @@
 #include <cuda_runtime.h>
 
 #ifndef NUM_REPS
-<<<<<<< Updated upstream
-#define NUM_REPS 10
-=======
 #define NUM_REPS 5
->>>>>>> Stashed changes
 #endif
 
 // Kernel: C = A * B
@@ -105,17 +101,9 @@ int main(int argc, char **argv)
     }
 
 
-<<<<<<< Updated upstream
-    // Print summary
-    double avg_time = total / NUM_REPS;
-
-    printf("Naive GPU: N=%d → Avg time = %.6f seconds\n", N, avg_time);
-    printf("some of the results: C[0] = %f, C[%d] = %f\n", d_C[0], N * N - 1, d_C[N * N - 1]);
-=======
     double total = total_time / NUM_REPS;
     double gflops = (6.0 * N * N * N) / (total * 1e9);
     printf("%.2f %.2f\n", total, gflops);
->>>>>>> Stashed changes
 
     // Cleanup
     cudaFree(d_A);
@@ -125,20 +113,6 @@ int main(int argc, char **argv)
     free(h_A);
     free(h_B);
     free(h_C);
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0);
-
-    int maxThreadsPerSM = prop.maxThreadsPerMultiProcessor;
-    int numSMs = prop.multiProcessorCount;
-
-    int activeThreads = blocksPerGrid.x * blocksPerGrid.y * threadsPerBlock.x * threadsPerBlock.y;
-    int theoreticalMaxThreads = maxThreadsPerSM * numSMs;
-    float occupancy = 100.0f * activeThreads / theoreticalMaxThreads;
-
-    printf("GPU Config: ThreadsPerBlock=%d, Blocks=%d × %d, SMs=%d, MaxThreads/SM=%d\n",
-           threadsPerBlock.x * threadsPerBlock.y, blocksPerGrid.x, blocksPerGrid.y, numSMs, maxThreadsPerSM);
-    printf("Active Threads: %d, Theoretical Max: %d → Occupancy ≈ %.2f%%\n",
-           activeThreads, theoreticalMaxThreads, occupancy);
 
     return 0;
 }

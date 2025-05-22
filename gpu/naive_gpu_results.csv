@@ -1,3 +1,0 @@
-N,threads,blocks,avg_time_ms,avg_power_watts,energy_mJ,total_mem_bytes,free_mem_bytes,avg_clock_mhz,min_clock_mhz,max_clock_mhz,avg_temp_c,gflops,gflops_per_watt,energy_per_flop_pj,occupancy_percent
-256,4,64,0.000320,3.28,1.0496e-06,6442450944,6244270080,300,300,300,37,314573,95906.4,1.04268e-08,213.33
-256,8,32,0.000323,20.65,6.66995e-06,6442450944,6244270080,1005,1005,1005,38,311651,15092.1,6.626e-08,213.33
