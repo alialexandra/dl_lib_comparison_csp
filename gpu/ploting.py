@@ -76,6 +76,7 @@ sns.lineplot(
     linewidth=2,
     palette="tab10"
 )
+
 plt.yscale("log")
 plt.title("Execution Time vs Matrix Size (N): CPU and GPU (Log Scale)")
 plt.xlabel("Matrix Size (N)")
@@ -83,4 +84,33 @@ plt.ylabel("Execution Time (seconds, log scale)")
 plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.tight_layout()
 plt.savefig("plots/cpu_vs_gpu_execution_time_logscale.png", dpi=300)
+plt.close()
+
+# ----- Plot 4: Execution Time vs N and Block Size (Naive vs Shared GPU) -----
+
+# Filter GPU results for naive and shared implementations only
+gpu_naive_shared = gpu_df_clean[
+    gpu_df_clean['Version'].isin(['naive_gpu', 'shared_gpu'])
+].dropna(subset=['BLOCK_SIZE'])
+
+# Create a label for each bar: "N=..., B=..."
+gpu_naive_shared['Label'] = gpu_naive_shared.apply(
+    lambda row: f"N={int(row['N'])}\nB={int(row['BLOCK_SIZE'])}", axis=1
+)
+
+plt.figure(figsize=(16, 6))
+sns.barplot(
+    data=gpu_naive_shared,
+    x="Label",
+    y="Time_sec",
+    hue="Version",
+    palette="pastel"
+)
+plt.xticks(rotation=45)
+plt.title("Execution Time by N and Block Size (Naive vs Shared GPU)")
+plt.xlabel("Matrix Size (N) and Block Size (B)")
+plt.ylabel("Execution Time (seconds)")
+plt.grid(axis='y', linestyle="--", linewidth=0.5)
+plt.tight_layout()
+plt.savefig("plots/execution_time_naive_vs_shared.png", dpi=300)
 plt.close()

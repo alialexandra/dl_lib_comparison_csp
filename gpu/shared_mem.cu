@@ -7,16 +7,18 @@
 #endif
 
 // Shared memory matrix multiplication kernel: C = A * B
-__global__ void sharedMatrixMulKernel(const double *A, const double *B, double *C, int n, int tile_size) {
+__global__ void sharedMatrixMulKernel(const double *A, const double *B, double *C, int n, int tile_size)
+{
     extern __shared__ double shared[];
-    double* tileA = shared;
-    double* tileB = &shared[tile_size * tile_size];
+    double *tileA = shared;
+    double *tileB = &shared[tile_size * tile_size];
 
     int row = blockIdx.y * tile_size + threadIdx.y;
     int col = blockIdx.x * tile_size + threadIdx.x;
 
     double sum = 0.0;
-    for (int t = 0; t < n / tile_size; ++t) {
+    for (int t = 0; t < n / tile_size; ++t)
+    {
         int tiled_row = row * n + t * tile_size + threadIdx.x;
         int tiled_col = (t * tile_size + threadIdx.y) * n + col;
 
@@ -33,20 +35,24 @@ __global__ void sharedMatrixMulKernel(const double *A, const double *B, double *
         C[row * n + col] = sum;
 }
 
-__global__ void addKernel(const double *X, const double *Y, double *Z, int n) {
+__global__ void addKernel(const double *X, const double *Y, double *Z, int n)
+{
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n)
         Z[idx] = X[idx] + Y[idx];
 }
 
-double gpu_timer(cudaEvent_t start, cudaEvent_t stop) {
+double gpu_timer(cudaEvent_t start, cudaEvent_t stop)
+{
     float ms;
     cudaEventElapsedTime(&ms, start, stop);
     return ms / 1000.0; // seconds
 }
 
-int main(int argc, char **argv) {
-    if (argc < 2) {
+int main(int argc, char **argv)
+{
+    if (argc < 2)
+    {
         fprintf(stderr, "Usage: %s <matrix_size> [tile_size]\n", argv[0]);
         return 1;
     }
@@ -59,7 +65,8 @@ int main(int argc, char **argv) {
     double *h_B = (double *)malloc(size);
     double *h_C = (double *)malloc(size);
 
-    for (int i = 0; i < N * N; ++i) {
+    for (int i = 0; i < N * N; ++i)
+    {
         h_A[i] = 1.0;
         h_B[i] = 2.0;
         h_C[i] = 0.0;
@@ -84,14 +91,15 @@ int main(int argc, char **argv) {
 
     double total_time = 0.0;
 
-    for (int rep = 0; rep < NUM_REPS; ++rep) {
+    for (int rep = 0; rep < NUM_REPS; ++rep)
+    {
         cudaMemset(d_C, 0, size);
         cudaMemset(d_temp, 0, size);
 
         cudaEventRecord(start);
 
-        sharedMatrixMulKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(d_B, d_A, d_C, N, TILE_SIZE);      // d_C = B * A^T
-        sharedMatrixMulKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(d_A, d_A, d_temp, N, TILE_SIZE);   // d_temp = A^2
+        sharedMatrixMulKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(d_B, d_A, d_C, N, TILE_SIZE);       // d_C = B * A^T
+        sharedMatrixMulKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(d_A, d_A, d_temp, N, TILE_SIZE);    // d_temp = A^2
         sharedMatrixMulKernel<<<blocksPerGrid, threadsPerBlock, sharedMemSize>>>(d_temp, d_B, d_temp, N, TILE_SIZE); // d_temp = A^2 * B
 
         int threads = TILE_SIZE * TILE_SIZE;
@@ -105,7 +113,7 @@ int main(int argc, char **argv) {
 
     double total = total_time / NUM_REPS;
     double gflops = (6.0 * N * N * N) / (total * 1e9);
-    printf("%.2f %.2f\n", total, gflops);
+    printf("%.6f %.2f\n", total, gflops);
 
     cudaFree(d_A);
     cudaFree(d_B);

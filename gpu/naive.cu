@@ -28,7 +28,6 @@ __global__ void addKernel(const double *X, const double *Y, double *Z, int n)
         Z[idx] = X[idx] + Y[idx];
 }
 
-
 double gpu_timer(cudaEvent_t start, cudaEvent_t stop)
 {
     float ms;
@@ -85,8 +84,8 @@ int main(int argc, char **argv)
         cudaEventRecord(start);
 
         // Compute Aᵀ (by swapping row/col access)
-        matrixMulKernel<<<blocksPerGrid, threadsPerBlock>>>(d_B, d_A, d_C, N);      // d_C = B * Aᵀ
-        matrixMulKernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_A, d_temp, N);   // d_temp = A²
+        matrixMulKernel<<<blocksPerGrid, threadsPerBlock>>>(d_B, d_A, d_C, N);       // d_C = B * Aᵀ
+        matrixMulKernel<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_A, d_temp, N);    // d_temp = A²
         matrixMulKernel<<<blocksPerGrid, threadsPerBlock>>>(d_temp, d_B, d_temp, N); // d_temp = A² * B
 
         // Sum both results into d_C = B*Aᵀ + A²*B
@@ -100,10 +99,9 @@ int main(int argc, char **argv)
         total_time += gpu_timer(start, stop);
     }
 
-
     double total = total_time / NUM_REPS;
     double gflops = (6.0 * N * N * N) / (total * 1e9);
-    printf("%.2f %.2f\n", total, gflops);
+    printf("%.6f %.2f\n", total, gflops);
 
     // Cleanup
     cudaFree(d_A);
