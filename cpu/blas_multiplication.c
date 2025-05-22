@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <cblas.h>
+#include <openblas_config.h> // Needed for openblas_get_num_threads()
 
 #ifndef NUM_REPS
 #define NUM_REPS 3
@@ -55,31 +56,28 @@ int main(int argc, char **argv)
     {
         double start = get_time();
 
-        // C1 = B × Aᵀ
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
                     N, N, N, 1.0, B, N, A, N, 0.0, C1, N);
 
-        // A2 = A × A
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                     N, N, N, 1.0, A, N, A, N, 0.0, A2, N);
 
-        // C2 = A2 × B
         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                     N, N, N, 1.0, A2, N, B, N, 0.0, C2, N);
 
-        // C = C1 + C2
         for (int i = 0; i < size; ++i)
             C[i] = C1[i] + C2[i];
 
         double end = get_time();
         double elapsed = end - start;
         total_time += elapsed;
-
-        printf("Run %d: %.6f seconds\n", rep + 1, elapsed);
     }
 
-    printf("BLAS: C = B*Aᵀ + A²*B | N=%d → Avg time over %d runs: %.6f seconds\n",
-           N, NUM_REPS, total_time / NUM_REPS);
+    double avg_time = total_time / NUM_REPS;
+    int used_threads = openblas_get_num_threads();
+
+    printf("BLAS: N=%d | Avg time = %.6f seconds | Threads used: %d\n", N, avg_time, used_threads);
+    printf("some of the results: C[0] = %f, C[%d] = %f\n", C[0], N * N - 1, C[N * N - 1]);
 
     free(A);
     free(B);

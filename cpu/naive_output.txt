@@ -1,0 +1,6 @@
+Average for N = 256 over 1 runs: 0.249747 seconds
+some of the results: C[0] = 131584.000000, C[65535] = 131584.000000
+Average for N = 512 over 1 runs: 1.896805 seconds
+some of the results: C[0] = 525312.000000, C[262143] = 525312.000000
+Average for N = 1024 over 1 runs: 17.327334 seconds
+some of the results: C[0] = 2099200.000000, C[1048575] = 2099200.000000

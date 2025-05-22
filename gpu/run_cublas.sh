@@ -2,10 +2,11 @@
 
 EXE="cublas"
 RESULTS_CSV="cublas_gpu_results.csv"
+RESULTS_OUTPUT="cublas_output.txt" # Output file name
 CLOCK_LOG="clock_cublas_tmp.csv"
 
 # Compile
-nvcc -O3 -lcublas -o $EXE cublas_full_expr.cu
+nvcc -O3 -lcublas -o $EXE cublas.cu
 
 # Header
 if [ ! -f "$RESULTS_CSV" ]; then
@@ -61,6 +62,8 @@ for N in 256 512 1024 2048 4096 8192; do
 
   # Log results
   echo "$N,$AVG_TIME_MS,$AVG_PWR,$ENERGY_MJ,$((TOTAL_MEM*1024*1024)),$((FREE_MEM*1024*1024)),$AVG_CLOCK,$MIN_CLOCK,$MAX_CLOCK,$AVG_TEMP,$GFLOPS,$GFLOPS_PER_WATT,$ENERGY_PER_FLOP_PJ" >> "$RESULTS_CSV"
-
+  echo "$OUTPUT" >> "$RESULTS_OUTPUT"
   rm -f "$CLOCK_LOG"
+  
 done
+rm -f $EXE

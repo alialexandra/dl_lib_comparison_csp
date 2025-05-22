@@ -47,7 +47,7 @@ double get_time()
 
 int main(int argc, char **argv)
 {
-    if (argc != 4)
+    if (argc < 4)
     {
         fprintf(stderr, "Usage: %s <N> <BLOCK_SIZE> <NUM_THREADS>\n", argv[0]);
         return 1;
@@ -114,6 +114,7 @@ int main(int argc, char **argv)
 
     printf("Blocked + OMP: N=%d BLOCK_SIZE=%d THREADS=%d → Avg time over %d runs: %.6f seconds\n",
            N, BLOCK_SIZE, NUM_THREADS, NUM_REPS, total_time / NUM_REPS);
+    printf("some of the results: C[0] = %f, C[%d] = %f\n", C[0], N * N - 1, C[N * N - 1]);
 
     free(A);
     free(B);

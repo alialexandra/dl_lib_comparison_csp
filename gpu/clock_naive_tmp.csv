@@ -1,0 +1,2 @@
+timestamp, power.draw [W], clocks.current.graphics [MHz], temperature.gpu
+2025/05/22 11:02:40.445, 20.82 W, 1005 MHz, 38

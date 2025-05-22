@@ -87,10 +87,9 @@ int main(int argc, char **argv)
 
     // Print summary
     double avg_time = total / NUM_REPS;
-    // cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost); // ← REQUIRED
 
     printf("Naive GPU: N=%d → Avg time = %.6f seconds\n", N, avg_time);
-    // printf("some of the results: C[0] = %f, C[%d] = %f\n", h_C[0], N * N - 1, h_C[N * N - 1]);
+    printf("some of the results: C[0] = %f, C[%d] = %f\n", d_C[0], N * N - 1, d_C[N * N - 1]);
 
     cudaFree(d_A);
     cudaFree(d_B);

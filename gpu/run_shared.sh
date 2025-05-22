@@ -2,12 +2,14 @@
 
 REPS=3
 RESULTS_CSV="shared_gpu_results.csv"
+RESULTS_OUTPUT="shared_output.txt" # Output file name
 CLOCK_LOG="clock_shared_tmp.csv"
 TILE_SIZE=16
 EXE=shared
+SRC=shared.cu
 
 # Compile shared kernel
-nvcc -O3 -o $EXE matrixMulShared.cu
+nvcc -O3 -o $EXE $SRC
 
 # CSV header
 if [ ! -f "$RESULTS_CSV" ]; then
@@ -65,6 +67,7 @@ for N in 256 512 1024 2048 4096 8192; do
   [[ ! "$SHARED_MEM_BYTES" =~ ^[0-9]+$ ]] && SHARED_MEM_BYTES="0"
 
   echo "$N,$TILE_SIZE,$BLOCKS,$AVG_TIME_MS,$AVG_PWR,$ENERGY_MJ,$((TOTAL_MEM*1024*1024)),$((FREE_MEM*1024*1024)),$AVG_CLOCK,$MIN_CLOCK,$MAX_CLOCK,$AVG_TEMP,$GFLOPS,$GFLOPS_PER_WATT,$ENERGY_PER_FLOP_PJ,$OCCUPANCY,$SHARED_MEM_BYTES" >> "$RESULTS_CSV"
-
+  echo "$OUTPUT" >> "$RESULTS_OUTPUT"
   rm -f "$CLOCK_LOG"
 done
+rm -f $EXE

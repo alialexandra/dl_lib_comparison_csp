@@ -104,10 +104,9 @@ int main(int argc, char **argv)
     }
 
     double avg_time = total / NUM_REPS;
-    // cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost);
 
     printf("Shared GPU: N=%d TILE_SIZE=%d → Avg time = %.6f ms\n", N, tileSize, avg_time);
-    // printf("some of the results: C[0] = %f, C[%d] = %f\n", h_C[0], N * N - 1, h_C[N * N - 1]);
+    printf("some of the results: C[0] = %f, C[%d] = %f\n", d_C[0], N * N - 1, d_C[N * N - 1]);
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, 0);
 

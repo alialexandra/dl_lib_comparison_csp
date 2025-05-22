@@ -95,11 +95,8 @@ int main(int argc, char **argv)
     float avg_time_ms = total_ms / NUM_REPS;
     printf("cuBLAS: N=%d → Avg time = %.6f ms\n", N, avg_time_ms);
 
-    // Copy result back
-    checkCuda(cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost), "Memcpy C");
-
     // Print example values
-    printf("some of the results: C[0] = %f, C[%d] = %f\n", h_C[0], N * N - 1, h_C[N * N - 1]);
+    printf("some of the results: C[0] = %f, C[%d] = %f\n", d_C[0], N * N - 1, d_C[N * N - 1]);
 
     // Clean up
     cublasDestroy(handle);

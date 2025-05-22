@@ -1,8 +1,14 @@
 #!/bin/bash
 
-REPS=3
+
 RESULTS_CSV="naive_gpu_results.csv"
+RESULTS_OUTPUT="naive_output.txt" # Output file name
 CLOCK_LOG="clock_naive_tmp.csv"
+$EXE="naive"
+$SRC="naive.cu"
+
+
+nvcc -O3 -o $EXE $SRC
 
 if [ ! -f "$RESULTS_CSV" ]; then
   echo "N,threads,blocks,avg_time_ms,avg_power_watts,energy_mJ,total_mem_bytes,free_mem_bytes,avg_clock_mhz,min_clock_mhz,max_clock_mhz,avg_temp_c,gflops,gflops_per_watt,energy_per_flop_pj,occupancy_percent" > "$RESULTS_CSV"
@@ -15,7 +21,7 @@ MAX_N=$(awk -v B=$BYTES_FREE 'BEGIN { printf("%d", sqrt(B / (8 * 4))) }')
 for N in 256 512 1024 2048 4096 8192; do
   [[ $N -gt $MAX_N ]] && break
 
-  for THREADS in 8 16 32; do
+  for THREADS in 4 8 16 32; do
     echo "Running naive kernel: N=$N, threads=$THREADS"
     nvcc -O3 -DTHREADS=$THREADS -o naive naive.cu
 
@@ -66,7 +72,9 @@ for N in 256 512 1024 2048 4096 8192; do
     [[ ! "$OCCUPANCY" =~ ^[0-9]+(\.[0-9]+)?$ ]] && OCCUPANCY="0.0"
 
     echo "$N,$THREADS,$BLOCKS,$AVG_TIME_MS,$AVG_PWR,$ENERGY_MJ,$((TOTAL_MEM*1024*1024)),$((FREE_MEM*1024*1024)),$AVG_CLOCK,$MIN_CLOCK,$MAX_CLOCK,$AVG_TEMP,$GFLOPS,$GFLOPS_PER_WATT,$ENERGY_PER_FLOP_PJ,$OCCUPANCY" >> "$RESULTS_CSV"
-
+    echo "$OUTPUT" >> "$RESULTS_OUTPUT" 
     rm -f "$CLOCK_LOG"
+
   done
 done
+rm -f $EXE
