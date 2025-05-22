@@ -64,3 +64,23 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig("plots/block_size_vs_gflops_gpu.png", dpi=300)
 plt.close()
+# ----- Plot 3: Execution Time vs Matrix Size (CPU and GPU) -----
+plt.figure(figsize=(12, 6))
+sns.lineplot(
+    data=combined_df,
+    x="N",
+    y="Time_sec",
+    hue="Version",
+    style="Group",
+    markers=True,
+    linewidth=2,
+    palette="tab10"
+)
+plt.yscale("log")
+plt.title("Execution Time vs Matrix Size (N): CPU and GPU (Log Scale)")
+plt.xlabel("Matrix Size (N)")
+plt.ylabel("Execution Time (seconds, log scale)")
+plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+plt.tight_layout()
+plt.savefig("plots/cpu_vs_gpu_execution_time_logscale.png", dpi=300)
+plt.close()
