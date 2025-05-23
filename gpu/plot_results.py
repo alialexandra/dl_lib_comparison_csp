@@ -3,24 +3,35 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgba
 import os
 
-# Load and parse the CSV
-with open("results.csv") as f:
-    reader = csv.DictReader(f)
-    data = list(reader)
+# Path to CSV file
+file_path = "results.csv"
 
-# Utility function to safely convert to float
+# Utility: safely convert string to float
 def safe_float(x):
     try:
-        return float(x)
+        val = float(x)
+        return val if val >= 0 else None  # filter out negative values
     except:
         return None
 
 # Ensure output directory exists
 os.makedirs("plots", exist_ok=True)
 
-# Create faded bar chart
+# Load and parse the CSV into a list of dicts
+with open(file_path) as f:
+    reader = csv.DictReader(f)
+    data = list(reader)
+
+# Generic bar chart generator
 def save_bar_chart(x_labels, values, title, filename, color):
-    plt.figure(figsize=(10, 5))
+    # Remove invalid (None) values
+    filtered = [(x, v) for x, v in zip(x_labels, values) if v is not None]
+    if not filtered:
+        print(f"Skipping {title}: no valid data.")
+        return
+    x_labels, values = zip(*filtered)
+
+    plt.figure(figsize=(12, 6))
     vmin = min(values)
     vmax = max(values)
     value_range = vmax - vmin if vmax != vmin else 1
@@ -34,38 +45,45 @@ def save_bar_chart(x_labels, values, title, filename, color):
     plt.ylabel("GFLOPs/sec")
     plt.title(title)
     plt.tight_layout()
-    plt.savefig(f"plots/{filename}.png")
+    plt.savefig(f"plots/{filename}_v2.png")
     plt.close()
+    print(f"Saved: plots/{filename}_v2.png")
 
-# 1. NAIVE GPU
+# === Naive GPU ===
 x_labels = []
 values = []
 for row in data:
     if row["Version"] == "naive_gpu":
-        label = f'N={row["N"]}\nB={row["BLOCK_SIZE"]}'
-        x_labels.append(label)
-        values.append(safe_float(row["GFLOPs"]))
+        gflops = safe_float(row["GFLOPs"])
+        if gflops is not None:
+            label = f'N={row["N"]}\nB={row["BLOCK_SIZE"]}'
+            x_labels.append(label)
+            values.append(gflops)
 
 save_bar_chart(x_labels, values, "Naive GPU Matrix Multiplication", "naive_gpu_performance", "mediumseagreen")
 
-# 2. SHARED GPU
+# === Shared Memory GPU ===
 x_labels = []
 values = []
 for row in data:
     if row["Version"] == "shared_gpu":
-        label = f'N={row["N"]}\nB={row["BLOCK_SIZE"]}'
-        x_labels.append(label)
-        values.append(safe_float(row["GFLOPs"]))
+        gflops = safe_float(row["GFLOPs"])
+        if gflops is not None:
+            label = f'N={row["N"]}\nB={row["BLOCK_SIZE"]}'
+            x_labels.append(label)
+            values.append(gflops)
 
 save_bar_chart(x_labels, values, "Shared Memory GPU Matrix Multiplication", "shared_gpu_performance", "slateblue")
 
-# 3. cuBLAS GPU
+# === cuBLAS GPU ===
 x_labels = []
 values = []
 for row in data:
     if row["Version"] == "cublas_gpu":
-        label = f'N={row["N"]}'
-        x_labels.append(label)
-        values.append(safe_float(row["GFLOPs"]))
+        gflops = safe_float(row["GFLOPs"])
+        if gflops is not None:
+            label = f'N={row["N"]}'
+            x_labels.append(label)
+            values.append(gflops)
 
 save_bar_chart(x_labels, values, "cuBLAS GPU Matrix Multiplication", "cublas_gpu_performance", "darkorange")

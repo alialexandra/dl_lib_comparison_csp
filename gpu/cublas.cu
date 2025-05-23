@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
     double total = total_time / NUM_REPS;
     double gflops = (6.0 * N * N * N) / (total * 1e9);
-    printf("%.6f %.2f\n", total, gflops);
+    printf("%.2f %.2f\n", total, gflops);
 
     // Cleanup
     cublasDestroy(handle);

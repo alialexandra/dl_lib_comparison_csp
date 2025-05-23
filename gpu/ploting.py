@@ -7,8 +7,11 @@ import os
 os.makedirs("plots", exist_ok=True)
 
 # Load data
-gpu_df = pd.read_csv("./results.csv")
-cpu_df = pd.read_csv("../cpu/results.csv")
+# Load CSVs
+gpu_results_path = "./results.csv"
+cpu_results_path = "../cpu/results_v2.csv"
+gpu_df = pd.read_csv(gpu_results_path)
+cpu_df = pd.read_csv(cpu_results_path)
 
 # Filter and clean
 gpu_df_clean = gpu_df.dropna(subset=['Time_sec', 'GFLOPs'])
@@ -32,16 +35,20 @@ sns.lineplot(
     style="Group",  # solid for GPU, dashed for CPU
     markers=True,
     linewidth=2,
-    palette="tab10"
+    palette="tab10",
+    errorbar=None  # <- removes shaded areas
 )
 plt.yscale("log")
-plt.title("GFLOPs vs Matrix Size (N): CPU vs GPU (Log Scale)")
+plt.title("GFLOPs vs Matrix Size (N): CPU vs GPU")
 plt.xlabel("Matrix Size (N)")
-plt.ylabel("GFLOPs (log scale)")
-plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+plt.ylabel("GFLOPs")
+plt.grid(True, axis="y", which="both", linestyle="--", linewidth=0.5)
+plt.grid(False, axis="x")  # Disable vertical grid lines
+plt.legend(title="Version", fontsize=9)
 plt.tight_layout()
-plt.savefig("plots/cpu_vs_gpu_gflops_logscale.png", dpi=300)
+plt.savefig("plots/cpu_vs_gpu_gflops_logscale_clean.png", dpi=300)
 plt.close()
+
 
 # ----- Plot 2: Block Size vs GFLOPs (colored by N) -----
 plt.figure(figsize=(12, 6))
@@ -62,7 +69,7 @@ plt.xlabel("Tile/Block Size")
 plt.ylabel("GFLOPs")
 plt.grid(True)
 plt.tight_layout()
-plt.savefig("plots/block_size_vs_gflops_gpu.png", dpi=300)
+plt.savefig("plots/block_size_vs_gflops_gpu_v2.png", dpi=300)
 plt.close()
 # ----- Plot 3: Execution Time vs Matrix Size (CPU and GPU) -----
 plt.figure(figsize=(12, 6))
@@ -83,7 +90,7 @@ plt.xlabel("Matrix Size (N)")
 plt.ylabel("Execution Time (seconds, log scale)")
 plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.tight_layout()
-plt.savefig("plots/cpu_vs_gpu_execution_time_logscale.png", dpi=300)
+plt.savefig("plots/cpu_vs_gpu_execution_time_logscale_v2.png", dpi=300)
 plt.close()
 
 # ----- Plot 4: Execution Time vs N and Block Size (Naive vs Shared GPU) -----
@@ -112,5 +119,5 @@ plt.xlabel("Matrix Size (N) and Block Size (B)")
 plt.ylabel("Execution Time (seconds)")
 plt.grid(axis='y', linestyle="--", linewidth=0.5)
 plt.tight_layout()
-plt.savefig("plots/execution_time_naive_vs_shared.png", dpi=300)
+plt.savefig("plots/execution_time_naive_vs_shared_v2.png", dpi=300)
 plt.close()
